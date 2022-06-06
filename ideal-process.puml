@@ -27,7 +27,7 @@ package StandardDevelopmentProcess {
 
 
 '------
-@startuml seq-req-anal
+@startuml seq-req-analysis
 
 skinparam handwritten true
 skinparam responseMessageBelowArrow true
