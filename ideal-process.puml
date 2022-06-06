@@ -35,14 +35,14 @@ skinparam responseMessageBelowArrow true
 mainframe Pattern: Story Refinement
 
 legend top left
-Motivation: 
+Motivation:
 	Take initial requirements from one line summary to development and testing ready.
 	nb:
-		DevTeamMember is SM and/or QA and/or  (ideal: all)
+		AnyOrAllDevTeamMember is SM and/or QA and/or Developer (ideally: all)
 end legend
 
 actor ProductOwner as po
-actor DevTeamMember as dtm
+actor AnyOrAllDevTeamMembers as dtm
 
 actor ScrumMaster as sm
 
@@ -87,7 +87,9 @@ end legend
 actor Developer as dev
 actor AnotherDeveloper as andev
 participant GitDeveloperLocalPCRepo as gl
+participant LocalTestEnvironment as lte
 participant GitCentralisedRepo as gc
+participant CentralTestEnvironment as cte
 
 autonumber 0
 autonumber inc A
@@ -101,26 +103,40 @@ loop while work uncompleted AND/OR full unit test suite not running
 		autonumber 5.1.0
 		autonumber inc C
 
-		dev -> gl: update local unit tests (tdd) to cater for new function(s) (fails).
-		dev -> gl: dev implements new functionality until test(s) pass.
-	
+		dev -> gl: update local unit tests (tdd) to cater for new function(s)
+		dev -> lte: run test spinning up local test environment (fails new test)
+		dev -> gl: Developer implements new functionality.
+		dev -> lte: run test spinning up local test environment (until new test passes)
+
 	else bug
 		autonumber inc B
 
-		dev -> gl: dev writes a new test to isolate bug (fails)
-		dev -> gl: dev fixes bug.
+		dev -> gl: Developer writes a new test to isolate bug.
+		dev -> lte: run test in local test environment (test fails)
+		dev -> gl: Developer commits bug fix.
+		dev -> lte: run tests spinning up local test environment (until new test passes)
 	end
 	autonumber 5.3
-	dev -> gl: full unit test suite run
+
+	dev -> gl: pull latests version of <develop> (to fix any conflics due to other dev changes)
+	gl -> gc: pull <develop>
+	dev -> gl: merge local changes with <develop>
+	alt any merge conficts
+		dev -> lte: fix merge issues on local change branch.
+		dev -> gl: commit fixed merge issues to local repo
+	end
+
+	dev -> gl: merge local change branch to local <develop>
+	dev -> lte: full unit test suite run on local <develop>
 end
 
 autonumber 6
 dev -> gl: dev pushes updates
 gl  -> gc: push updates
-gc  -> gc: 'request to accept updated code' created (sometimes known as pull request)
+gc  -> gc: 'request to accept updated code' created
 
-gc -> gc: run test suite to validate changes
-andev -> gc: review code to validate changes
+cte -> cte: run test suite to validate changes
+andev -> cte: review code to validate changes
 
 alt pass review and full test suite
 	autonumber 11.1
@@ -152,7 +168,10 @@ actor QAEngineer as qa
 actor ScrumMaster as sm
 actor Developer as dev
 participant GitCentralisedRepo as gc
-participant GitQARepo as gq
+participant GitQALocalRepo as gqlr
+participant LocalQAEnvironment as lqe
+participant GitPOLocalRepo as gplr
+participant LocalPOEnvironment as lpe
 database StoryRepo as sr
 
 autonumber 0.0
@@ -162,14 +181,15 @@ autonumber inc A
 'todo: triggering of transfer <develop> to <QA Env>
 'todo: qa repo? branch? ...
 
-' QA & UAT
+'QA & UAT
 
 autonumber 1
 loop still stories untested in current sprint
-	qa -> gq : pull latest <develop> version (contains story work to be tested)
-	gq -> gc : pull latest <develop> version
+	qa -> gqlr : pull latest <develop> version (contains story work to be tested)
+	gqlr -> gc : pull latest <develop> version
+	gc --> gqlr: latest <develop> version
 	qa <- sr : obtain test script
-	qa -> gq: run test
+	qa -> lqe: run test
 	
 	alt pass test
 		qa -> sr: mark qa testing completed and pass on for UAT
@@ -184,9 +204,11 @@ loop still stories untested in current sprint
 
 'todo: <uat>
 
-loop still stories not acceptance tested
-	po <- sr: obtain UAT script
-	po -> gq: run test
+loop still stories not user acceptance tested
+	po -> gplr: pull latest version of central <develop>
+	gplr -> gc: pull latest version of <develop>
+	po -> sr: obtain UAT script
+	po -> lpe: run test
 	
 	alt pass test
 		po -> sr: mark UAT completed and pass on for UAT
