@@ -1,0 +1,205 @@
+'------
+@startuml uc
+legend top left
+	Overall Development Process - Major Use Cases (aka Steps)
+	nb: 
+		Actors indicate <b>Roles</b> - i.e. not a particular person or persons
+		Singular includes plural (eg. Developer can be Developers )
+		Capilatilisation/CamelCase indicates Formal Naming (used consistently throughout for clarity)
+end legend
+
+package StandardDevelopmentProcess {
+	(Story Refinement) as (SR)
+	(New Feature or Bug Fix) as (NFB)
+	(Testing) as (T)
+}
+
+:Product Owner: -> SR
+:ScrumMaster: --> SR
+:Developer: --> SR
+:QAEngineer: --> SR
+
+:Developer: --> NFB
+:QAEngineer: --> T
+:Product Owner: -> T
+
+@enduml
+
+
+'------
+@startuml seq-req-anal
+
+skinparam handwritten true
+skinparam responseMessageBelowArrow true
+
+mainframe Pattern: Story Refinement
+
+legend top left
+Motivation: 
+	Take initial requirements from one line summary to development and testing ready.
+	nb:
+		DevTeamMember is SM and/or QA and/or  (ideal: all)
+end legend
+
+actor ProductOwner as po
+actor DevTeamMember as dtm
+
+actor ScrumMaster as sm
+
+actor Developer as dev
+actor QAEngineer as qa
+
+database StoryRepo as sr
+
+autonumber 0.0
+autonumber inc A
+
+loop <<AtAnyTime>> add OneLineStory to StoryRepo (Scrum: product backlog)
+	po -> sr : add story summary
+	po <-> sm : prioritise and schedule
+end
+
+autonumber inc A
+
+loop <<PreSprintPlanning>> while still unrefined stories (possibly) for next sprint AND story is not sufficiently clear
+	po <-> dtm: refine story
+	dtm -> sr: update story details / points estimate
+	dtm -> sr: define manual / automated test script (UI level)
+	po -> sr: define UAT script (UI level)
+end loop
+
+@enduml
+
+'------
+@startuml seq-dev-core
+
+skinparam handwritten true
+skinparam responseMessageBelowArrow true
+
+mainframe Pattern: New feature enhancement / bug fix
+
+legend top left
+Motivation: 
+	Ensure working copy of the latest stable development (branch) is always available 
+	nb: this is called <develop> below.
+end legend
+
+actor Developer as dev
+actor AnotherDeveloper as andev
+participant GitDeveloperLocalPCRepo as gl
+participant GitCentralisedRepo as gc
+
+autonumber 0
+autonumber inc A
+dev -> gl: pull copy of <develop> branch (inc. unit tests)
+gl -> gc: pull <develop>
+gc --> gl: <develop> (branch)
+dev -> gl: validate <develop> - run unit test
+
+loop while work uncompleted AND/OR full unit test suite not running
+	alt feature
+		autonumber 5.1.0
+		autonumber inc C
+
+		dev -> gl: update local unit tests (tdd) to cater for new function(s) (fails).
+		dev -> gl: dev implements new functionality until test(s) pass.
+	
+	else bug
+		autonumber inc B
+
+		dev -> gl: dev writes a new test to isolate bug (fails)
+		dev -> gl: dev fixes bug.
+	end
+	autonumber 5.3
+	dev -> gl: full unit test suite run
+end
+
+autonumber 6
+dev -> gl: dev pushes updates
+gl  -> gc: push updates
+gc  -> gc: 'request to accept updated code' created (sometimes known as pull request)
+
+gc -> gc: run test suite to validate changes
+andev -> gc: review code to validate changes
+
+alt pass review and full test suite
+	autonumber 11.1
+	andev -> gc: update accepted into <develop>
+	gc -> gc: update accepted into <develop>
+else fail
+	autonumber 11.2
+	gc -> gl: update rejected (goto: loop)
+end
+
+@enduml
+
+
+'------
+@startuml seq-testing
+
+skinparam handwritten true
+skinparam responseMessageBelowArrow true
+
+mainframe Pattern: Testing
+
+legend top left
+Motivation: 
+	Test 'completed' development work and ensure acceptable.
+end legend
+
+actor ProductOwner as po
+actor QAEngineer as qa
+actor ScrumMaster as sm
+actor Developer as dev
+participant GitCentralisedRepo as gc
+participant GitQARepo as gq
+database StoryRepo as sr
+
+autonumber 0.0
+autonumber inc A
+
+'todo: push develop to QA environment / environments versus repos, etc.
+'todo: triggering of transfer <develop> to <QA Env>
+'todo: qa repo? branch? ...
+
+' QA & UAT
+
+autonumber 1
+loop still stories untested in current sprint
+	qa -> gq : pull latest <develop> version (contains story work to be tested)
+	gq -> gc : pull latest <develop> version
+	qa <- sr : obtain test script
+	qa -> gq: run test
+	
+	alt pass test
+		qa -> sr: mark qa testing completed and pass on for UAT
+	else fail
+		sm <-> qa: prioritise bug for current or future sprint
+		alt current
+			sm -> dev: assign for current sprint
+		else future
+			sm -> sr: update story repo for future reference
+		end
+	end
+
+'todo: <uat>
+
+loop still stories not acceptance tested
+	po <- sr: obtain UAT script
+	po -> gq: run test
+	
+	alt pass test
+		po -> sr: mark UAT completed and pass on for UAT
+	else fail
+		sm <-> po: prioritise bug for current or future sprint
+		alt current
+			sm -> dev: assign for current sprint
+		else future
+			sm -> sr: update story repo for future reference
+		end
+	end
+end
+	
+end loop
+
+@enduml
