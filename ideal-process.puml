@@ -8,20 +8,38 @@ legend top left
 		Capilatilisation/CamelCase indicates Formal Naming (used consistently throughout for clarity)
 end legend
 
+top to bottom direction
+
 package StandardDevelopmentProcess {
+	top to bottom direction
+	(Dev Lifecycle) as (DL)
+
+
 	(Story Refinement) as (SR)
-	(New Feature or Bug Fix) as (NFB)
+
 	(Testing) as (T)
+	(New Feature or Bug Fix) as (NFB)
+
+
+	(DL) ..> (SR) : include
+	(DL) ..> (NFB) : include
+	(DL) ..> (T) : include
 }
 
-:Product Owner: -> SR
-:ScrumMaster: --> SR
-:Developer: --> SR
-:QAEngineer: --> SR
+actor :Scrum Master: as SM
+actor :DevTeamMember: as DTM
+actor :Product Owner: as PO
 
-:Developer: --> NFB
-:QAEngineer: --> T
-:Product Owner: -> T
+actor :QA Engineer: as QAE
+actor :Developer: as DEV
+
+DTM <|-- SM
+DTM <|-- DEV
+DTM <|-- QAE
+
+PO --> SR
+SM --> SR
+DTM --> DL
 
 @enduml
 
