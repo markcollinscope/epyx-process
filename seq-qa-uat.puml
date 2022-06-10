@@ -13,7 +13,6 @@ TBC:
 - qa-test is manual?
 - issues relating to dropping bugs into current sprint
 - uat - in-sprint with <develop-branch>?
-
 end legend
 
 actor ProductOwner as po
