@@ -1,7 +1,4 @@
-
-
-'------
-@startuml seq-testing
+@startuml seq-qa-uat
 
 skinparam responseMessageBelowArrow true
 
@@ -10,29 +7,46 @@ mainframe Pattern: Testing
 legend top left
 Motivation: 
 	Test 'completed' development work and ensure acceptable.
+
+TBC: 
+- qa-work is undertaken using <develop-branch> 
+- qa-test is manual?
+- issues relating to dropping bugs into current sprint
+
 end legend
 
 actor ProductOwner as po
 actor QAEngineer as qa
 actor ScrumMaster as sm
 actor Developer as dev
-participant GitCentralisedRepo as gc
-participant GitQALocalRepo as gqlr
-participant LocalQAEnvironment as lqe
-participant GitPOLocalRepo as gplr
-participant LocalPOEnvironment as lpe
+
+box QA-ENV #LightBlue
+	participant GitQALocalRepo as gqlr
+	participant LocalQAEnvironment as lqe
+end box
+
+box PO-TEST-ENV #LightSkyBlue
+	participant GitPOLocalRepo as gplr
+	participant LocalPOEnvironment as lpe
+end box
+
+box Central (Source Code and Test Environment) #LightGray
+	participant GitCentralisedRepo as gc
+end box
+
 database StoryRepo as sr
 
 autonumber 0.0
 autonumber inc A
 
+== QA - WITHIN DEV TEAM ==
+
 autonumber 1
 loop still stories untested in current sprint
-	qa -> gqlr : pull latest <develop> version (contains story work to be tested)
-	gqlr -> gc : pull latest <develop> version
-	gc --> gqlr: latest <develop> version
-	qa <- sr : obtain test script
-	qa -> lqe: run test
+	qa -> gqlr : PULL latest <develop-branch> version (contains story work to be tested)
+	gqlr -> gc : PULL latest <develop-branch> version
+	qa -> sr : GET QA-TEST script
+	qa -> lqe: RUN QA-TEST (manual)
 	
 	alt pass test
 		qa -> sr: mark qa testing completed and pass on for UAT
@@ -45,7 +59,7 @@ loop still stories untested in current sprint
 		end
 	end
 
-'todo: <uat>
+== UAT ==
 
 loop still stories not user acceptance tested
 	po -> gplr: pull latest version of central <develop>

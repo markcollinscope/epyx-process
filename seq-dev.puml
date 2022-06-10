@@ -2,7 +2,7 @@
 
 skinparam responseMessageBelowArrow true
 
-mainframe Pattern: New feature enhancement / bug fix
+mainframe Pattern: Development - New Feature Enhancement or Bug Fix
 
 legend top left
 Motivation: 
@@ -15,27 +15,21 @@ end legend
 actor Developer as DEV
 actor AnotherDeveloper as ANDEV
 
-box Local Developer's PC #LightYellow
+box Local (Developer's PC) #LightYellow
     participant GitLocalCodeRepo as GLCR
 	participant LocalTestEnvironment as LTE
 end box
 
-box Centralised Source Code and Test Environment #LightGray
+box Central (Source Code and Test Environment) #LightGray
 	participant GitCentralCodeRepo as GC
 	participant CentralTestEnvironment as CTE
 end box
 
-autonumber 0
-autonumber inc A
+autonumber 1
 
 == SET-UP FOR UNDERTAKING NEW FEATURE/BUG WORK ==
 DEV -> GLCR: PULL <develop-branch> branch (including UNIT-TESTS)
 GLCR -> GC: PULL <develop-branch>
-
-'TBD
-note left
-	TBD: develop-branch or develop-branch-local (naming conventions)
-end note
 
 DEV -> LTE: RUN UNIT-TESTS to validate <develop-branch>
 	note right
