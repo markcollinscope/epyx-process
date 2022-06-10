@@ -12,6 +12,7 @@ TBC:
 - qa-work is undertaken using <develop-branch> 
 - qa-test is manual?
 - issues relating to dropping bugs into current sprint
+- uat - in-sprint with <develop-branch>?
 
 end legend
 
@@ -62,8 +63,8 @@ loop still stories untested in current sprint
 == UAT ==
 
 loop still stories not user acceptance tested
-	po -> gplr: pull latest version of central <develop>
-	gplr -> gc: pull latest version of <develop>
+	po -> gplr: pull latest version of <develop-branch>
+	gplr -> gc: pull latest version of <develop-branch>
 	po -> sr: obtain UAT script
 	po -> lpe: run test
 	
