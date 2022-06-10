@@ -1,0 +1,38 @@
+@startuml uc-sdlc
+legend top left
+	Overall Development Process - Major Use Cases (aka Steps)
+	nb: 
+		Actors indicate <b>Roles</b> - i.e. not a particular person or persons
+		Singular includes plural (eg. Developer can be Developers )
+end legend
+
+actor :DevTeamMember: as DTM
+actor :ScrumMaster: as SM
+actor :Developer: as DEV
+actor :QAEngineer: as QAE
+DTM <|-- SM
+DTM <|-- DEV
+DTM <|-- QAE
+
+actor :ProductOwner: as PO
+
+package StandardDevelopmentProcess {
+	top to bottom direction
+
+	(Software Development Lifecycle) as (SDLC)
+
+	(1: Story Refinement) as (SR)
+	(2: Development Work) as (DW)
+	(3: Testing / QA) as (TQA)
+
+	(SDLC) ..> (SR) : include
+	(SDLC) ..> (DW) : include
+	(SDLC) ..> (TQA) : include
+}
+
+
+PO --> SR
+PO --> TQA
+DTM --> SDLC
+
+@enduml

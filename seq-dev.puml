@@ -1,0 +1,105 @@
+@startuml seq-dev
+
+skinparam responseMessageBelowArrow true
+
+mainframe Pattern: New feature enhancement / bug fix
+
+legend top left
+Motivation: 
+	Ensure central working copy of the latest stable development branch is always available (<develop-branch>)
+end legend
+
+actor Developer as DEV
+actor AnotherDeveloper as ANDEV
+
+box Local Developer's PC #LightYellow
+    participant GitLocalCodeRepo as GLCR
+	participant LocalTestEnvironment as LTE
+end box
+
+box Central Environment #LightGray
+participant GitCentralCodeRepo as GC
+participant CentralTestEnvironment as CTE
+
+autonumber 0
+autonumber inc A
+
+== SET-UP FOR UNDERTAKING NEW FEATURE/BUG WORK ==
+DEV -> GLCR: PULL <develop-branch> branch (including UNIT-TESTS)
+GLCR -> GC: PULL <develop-branch>
+
+'TBD
+note right
+	TBD: develop-branch or develop-branch-local (naming conventions)
+end note
+
+DEV -> LTE: RUN UNIT-TESTS to validate <develop-branch>
+	note right
+	ALERT ScrumMaster ON FAILURE
+	end note
+
+DEV -> GLCR: CREATE-BRANCH <feature-branch> locally
+	note right
+	Keep new work isolated from main <develop> branch at all times.
+	This will finally be resolved centrally, not locally.
+	end note
+
+== WORK IN PROGRESS ==
+loop while work uncompleted and/or RUN UNIT-TEST failing
+	group <<AtRegularIntervals>> [not  part of normal loop flow]
+		autonumber 5.0
+		DEV -> GLCR: PULL <develop-branch> from central
+		DEV -> GLCR: MERGE <develop-branch> => <feature-branch>
+			note right
+				MERGE <develop-branch> => <feature-branch>
+				at *regular intervals* to reduce merge conflicts on final commit 
+				of local work.
+			end note
+		GLCR ->  GC: PULL <develop-branch>
+	end
+
+	alt feature
+		DEV -> GLCR: update local unit tests (tdd-style) to cater for new function(s)
+		DEV -> LTE: run test spinning up local test environment (fails new test)
+		DEV -> GLCR: Developer implements new functionality COMMITS locallu
+		DEV -> LTE: run test spinning up local test environment (until new test passes)
+
+	else bug
+		DEV -> GC: Developer writes a new test to isolate bug.
+		DEV -> LTE: run test in local test environment (test fails)
+		DEV -> GC: Developer commits bug fix.
+		DEV -> LTE: run tests spinning up local test environment (until new test passes)
+	end
+
+	autonumber 5.3
+
+	DEV -> GC: final pull latests version of <develop> (to fix any conflics due to other dev changes)
+	GLCR -> GC: pull <develop-branch>
+	DEV -> GC: merge local changes with <develop-branch>
+	alt any merge conficts
+		DEV -> S: fix merge issues on local change branch.
+		DEV -> GC: commit fixed merge issues to local repo
+	end
+
+	DEV -> GC: merge local change branch to local <develop>
+	DEV -> LTE: full unit test suite run on local <develop>
+end
+
+autonumber 6
+DEV -> GC: dev pushes updates
+GLCR  -> GC: push updates
+GC  -> GC: 'request to accept updated code' created
+
+CTE -> CTE: run test suite to validate changes
+ANDEV -> CTE: review code to validate changes
+
+alt pass review and full test suite
+	autonumber 11.1
+	ANDEV -> GC: update accepted into <develop>
+	GC -> GC: update accepted into <develop>
+else fail
+	autonumber 11.2
+	GC -> GC: update rejeCTEd (goto: loop)
+end
+
+@enduml

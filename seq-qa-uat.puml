@@ -1,0 +1,70 @@
+
+
+'------
+@startuml seq-testing
+
+skinparam responseMessageBelowArrow true
+
+mainframe Pattern: Testing
+
+legend top left
+Motivation: 
+	Test 'completed' development work and ensure acceptable.
+end legend
+
+actor ProductOwner as po
+actor QAEngineer as qa
+actor ScrumMaster as sm
+actor Developer as dev
+participant GitCentralisedRepo as gc
+participant GitQALocalRepo as gqlr
+participant LocalQAEnvironment as lqe
+participant GitPOLocalRepo as gplr
+participant LocalPOEnvironment as lpe
+database StoryRepo as sr
+
+autonumber 0.0
+autonumber inc A
+
+autonumber 1
+loop still stories untested in current sprint
+	qa -> gqlr : pull latest <develop> version (contains story work to be tested)
+	gqlr -> gc : pull latest <develop> version
+	gc --> gqlr: latest <develop> version
+	qa <- sr : obtain test script
+	qa -> lqe: run test
+	
+	alt pass test
+		qa -> sr: mark qa testing completed and pass on for UAT
+	else fail
+		sm <-> qa: prioritise bug for current or future sprint
+		alt current
+			sm -> dev: assign for current sprint
+		else future
+			sm -> sr: update story repo for future reference
+		end
+	end
+
+'todo: <uat>
+
+loop still stories not user acceptance tested
+	po -> gplr: pull latest version of central <develop>
+	gplr -> gc: pull latest version of <develop>
+	po -> sr: obtain UAT script
+	po -> lpe: run test
+	
+	alt pass test
+		po -> sr: mark UAT completed and pass on for UAT
+	else fail
+		sm <-> po: prioritise bug for current or future sprint
+		alt current
+			sm -> dev: assign for current sprint
+		else future
+			sm -> sr: update story repo for future reference
+		end
+	end
+end
+	
+end loop
+
+@enduml

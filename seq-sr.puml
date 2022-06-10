@@ -1,0 +1,40 @@
+'------
+@startuml seq-sr
+
+skinparam responseMessageBelowArrow true
+
+mainframe Pattern: Story Refinement
+
+legend top left
+Motivation:
+Take initial requirements from one line summary to development and testing ready.
+
+nb:
+DevTeamMember is SM and/or QAE and/or Developer (ideally: all)
+end legend
+
+actor ProductOwner as PO
+actor DevTeamMember as DTM
+actor ScrumMaster as SM
+actor QAEngineer as QA
+' actor Developer as DEV
+database StoryRepo as SR
+
+autonumber 0.0
+autonumber inc A
+
+loop <<AtAnyTime>> add OneLineStory to StoryRepo (Scrum: product backlog)
+	PO -> SR : add story summary
+	PO <-> SM : prioritise and schedule
+end
+
+autonumber inc A
+
+loop <<PreSprintPlanning>> while still unrefined stories (possibly) for next sprint AND story is not sufficiently clear
+	PO <-> DTM: refine story
+	DTM -> SR: update story details / points estimate
+	QA -> SR: define manual / automated test script (UI level)
+	PO -> SR: define UAT script (UI level)
+end loop
+
+@enduml
