@@ -6,7 +6,10 @@ mainframe Pattern: New feature enhancement / bug fix
 
 legend top left
 Motivation: 
-	Ensure central working copy of the latest stable development branch is always available (<develop-branch>)
+To ensure central working copy of the latest stable development branch 
+is always available (herein known as <develop-branch>)
+
+TBD: Numbering / Stereotypes / Sub-Process
 end legend
 
 actor Developer as DEV
@@ -17,9 +20,10 @@ box Local Developer's PC #LightYellow
 	participant LocalTestEnvironment as LTE
 end box
 
-box Central Environment #LightGray
-participant GitCentralCodeRepo as GC
-participant CentralTestEnvironment as CTE
+box Centralised Source Code and Test Environment #LightGray
+	participant GitCentralCodeRepo as GC
+	participant CentralTestEnvironment as CTE
+end box
 
 autonumber 0
 autonumber inc A
@@ -29,7 +33,7 @@ DEV -> GLCR: PULL <develop-branch> branch (including UNIT-TESTS)
 GLCR -> GC: PULL <develop-branch>
 
 'TBD
-note right
+note left
 	TBD: develop-branch or develop-branch-local (naming conventions)
 end note
 
@@ -40,66 +44,76 @@ DEV -> LTE: RUN UNIT-TESTS to validate <develop-branch>
 
 DEV -> GLCR: CREATE-BRANCH <feature-branch> locally
 	note right
-	Keep new work isolated from main <develop> branch at all times.
-	This will finally be resolved centrally, not locally.
+	Keep new work isolated from central and local <develop-branch> 
+	at all times. This will finally be resolved centrally, not locally.
 	end note
 
 == WORK IN PROGRESS ==
 loop while work uncompleted and/or RUN UNIT-TEST failing
-	group <<AtRegularIntervals>> [not  part of normal loop flow]
-		autonumber 5.0
+	autonumber 5.0
+	
+	group <<sub-process>> [MERGE-MOST-RECENT-DEVELOP-BRANCH]
 		DEV -> GLCR: PULL <develop-branch> from central
-		DEV -> GLCR: MERGE <develop-branch> => <feature-branch>
-			note right
-				MERGE <develop-branch> => <feature-branch>
-				at *regular intervals* to reduce merge conflicts on final commit 
-				of local work.
-			end note
 		GLCR ->  GC: PULL <develop-branch>
+		DEV -> GLCR: MERGE <develop-branch> => <feature-branch>
+		alt while merge conflict <develop-branch> vs <feature-branch>
+			DEV -> GLCR: fix merge conflicts and COMMIT <feature-branch>
+			DEV -> GLCR: re-test by MERGE <develop-branch> => <feature-branch>
+		end
 	end
+
+	DEV -> GLCR: <<at regular intervals>> do subprocess MERGE-MOST-RECENT-DEVELOP-BRANCH
+	note right
+		undertaken at *regular intervals* to reduce merge conflicts on final commit 
+		of local work.
+	end note
 
 	alt feature
 		DEV -> GLCR: update local unit tests (tdd-style) to cater for new function(s)
-		DEV -> LTE: run test spinning up local test environment (fails new test)
-		DEV -> GLCR: Developer implements new functionality COMMITS locallu
-		DEV -> LTE: run test spinning up local test environment (until new test passes)
+		DEV -> LTE: RUN UNIT-TEST spinning up local test environment (fails new test)
+		DEV -> GLCR: Developer implements new functionality
+		DEV -> LTE: RUN UNIT-TEST spinning up local test environment (until new test passes)
 
 	else bug
-		DEV -> GC: Developer writes a new test to isolate bug.
-		DEV -> LTE: run test in local test environment (test fails)
-		DEV -> GC: Developer commits bug fix.
-		DEV -> LTE: run tests spinning up local test environment (until new test passes)
+		DEV -> GLCR: Developer writes a new test to isolate bug (tdd-style)
+		DEV -> LTE: RUN UNIT-TEST local test environment (test fails)
+		DEV -> GLCR: Developer fixes bug
+		DEV -> LTE: RUN UNIT-TEST spinning up local test environment (until new test passes)
 	end
 
+	DEV -> GLCR: <<sub-process>> MERGE-MOST-RECENT-DEVELOP-BRANCH (final time)
 	autonumber 5.3
 
-	DEV -> GC: final pull latests version of <develop> (to fix any conflics due to other dev changes)
-	GLCR -> GC: pull <develop-branch>
-	DEV -> GC: merge local changes with <develop-branch>
-	alt any merge conficts
-		DEV -> S: fix merge issues on local change branch.
-		DEV -> GC: commit fixed merge issues to local repo
-	end
-
-	DEV -> GC: merge local change branch to local <develop>
-	DEV -> LTE: full unit test suite run on local <develop>
+	note over DEV, ANDEV
+		NB: 
+		For all work undertake as part of this *loop* 
+		COMMIT locally to <feature-branch>
+	end note
 end
 
+== CODE QUALITY AND CENTRAL TEST ==
 autonumber 6
-DEV -> GC: dev pushes updates
-GLCR  -> GC: push updates
-GC  -> GC: 'request to accept updated code' created
+DEV -> GLCR: PUSH <feature-branch>
+GLCR  -> GC: PUSH <feature-branch>
+GC  -> GC: 'request to accept updated code' created (ideally automated)
+CTE -> CTE: RUN UNIT-TEST test suite to validate changes (ideally automated)
 
-CTE -> CTE: run test suite to validate changes
-ANDEV -> CTE: review code to validate changes
+note over DEV, ANDEV
+... later
+end note
+
+ANDEV -> CTE: CODE-REVIEW to validate changes
 
 alt pass review and full test suite
 	autonumber 11.1
-	ANDEV -> GC: update accepted into <develop>
-	GC -> GC: update accepted into <develop>
+	ANDEV -> GC: update accepted into <develop-branch>
 else fail
 	autonumber 11.2
-	GC -> GC: update rejeCTEd (goto: loop)
+	GC -> GC: update rejected (back to: loop)
 end
+
+== CLEAN-UP ==
+DEV -> GLCR: DELETE <feature-branch> local
+DEV -> GC: DELETE <feature-branch> central
 
 @enduml
